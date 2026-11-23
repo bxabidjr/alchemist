@@ -1,0 +1,518 @@
+<!DOCTYPE html>
+<html lang="en" data-t="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Alchemist by BXA – Molecule Explorer</title>
+<style>
+/* ===== Theme tokens (dark = lab night, light = lab bench) ===== */
+:root{--bg:#0a1020;--pn:#111a2e;--tx:#e6edf7;--mu:#8ea0bd;--ac:#3dd6c6;--bd:#23324f;--cv:radial-gradient(circle at 50% 40%,#18284a,#090f1d)}
+:root[data-t=light]{--bg:#edf2f8;--pn:#fff;--tx:#0f1b2d;--mu:#587089;--ac:#0b7a75;--bd:#d0dcea;--cv:radial-gradient(circle at 50% 40%,#fff,#d9e5f2)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--tx);font:14px/1.5 "Segoe UI","Noto Sans Bengali","Kalpurush",system-ui,sans-serif}
+header{position:sticky;top:0;z-index:5;background:var(--bg);display:flex;justify-content:space-between;align-items:center;padding:8px 14px;border-bottom:1px solid var(--bd)}
+header h1{font:700 18px Georgia,serif;margin:0}
+header h1 span{color:var(--mu);font:12px sans-serif;margin-left:8px}
+header .r{display:flex;gap:6px}
+button,select,input,textarea{font:inherit;color:var(--tx);background:var(--pn);border:1px solid var(--bd);border-radius:6px;padding:5px 9px}
+input[type=checkbox],input[type=range]{padding:0;accent-color:var(--ac)}
+button{cursor:pointer}button:hover{border-color:var(--ac)}
+button.on,.chip.on{background:var(--ac);color:#04201e;border-color:var(--ac);font-weight:600}
+main{display:grid;grid-template-columns:260px minmax(0,1fr) 340px;gap:12px;padding:12px;height:calc(100vh - 50px);height:calc(100dvh - 50px)}
+aside,#info{background:var(--pn);border:1px solid var(--bd);border-radius:8px;padding:12px;overflow:auto;min-height:0}
+#view{display:flex;flex-direction:column;min-height:0;border:1px solid var(--bd);border-radius:8px;background:var(--pn);overflow:hidden}
+.bar{display:flex;flex-wrap:wrap;gap:6px 12px;align-items:center;padding:7px 8px;border-bottom:1px solid var(--bd)}
+.bar label{font-size:12px;color:var(--mu);display:flex;gap:5px;align-items:center}
+#cw{position:relative;flex:1;min-height:260px;background:var(--cv)}
+#cv{position:absolute;inset:0;width:100%;height:100%;touch-action:none;cursor:grab}
+#legend{position:absolute;bottom:6px;left:8px;right:8px;font-size:11px;color:var(--mu);display:flex;flex-wrap:wrap;gap:2px 12px;pointer-events:none}
+#legend i{display:inline-block;width:14px;height:4px;border-radius:2px;margin-right:4px;vertical-align:middle}
+#note{position:absolute;bottom:34px;left:8px;right:8px;font-size:12px;color:var(--ac);pointer-events:none}
+.g{margin-top:8px}
+.chip{display:inline-flex;align-items:center;margin:2px;padding:2px 9px;border-radius:12px;font-size:12px;cursor:pointer;border:1px solid var(--bd)}
+#list button{display:block;width:100%;text-align:left;margin:4px 0}
+#list button.on small,#rlist button.on small{color:#04201e}#rlist button{display:block;width:100%;text-align:left;margin:4px 0}#enc{display:block;margin:4px 0}
+small,.mu{color:var(--mu)}
+#info h2{margin:0;font:700 22px Georgia,"Noto Sans Bengali",serif}
+#info h3{margin:14px 0 2px;font-size:13px;color:var(--ac)}
+#info p{margin:2px 0}.f{font-size:20px;margin:2px 0}
+details{margin-top:12px}summary{cursor:pointer;font-weight:600}
+textarea{width:100%;height:80px;font-family:monospace;font-size:12px}
+@media(max-width:1150px){main{grid-template-columns:230px minmax(0,1fr) 280px}}
+@media(max-width:900px){ /* phones & small tablets: viewer first, then picker, then info */
+ main{grid-template-columns:1fr;height:auto;padding:8px;gap:8px}
+ #view{order:-1}#cw{flex:none;height:56vh;min-height:300px}
+ aside,#info{overflow:visible}#list{max-height:45vh;overflow:auto}
+ header h1 span{display:none}}
+@media(pointer:coarse){button,select,.chip{min-height:38px}.chip{padding:4px 12px}input[type=range]{width:110px}}
+[hidden]{display:none!important}
+.tabs{display:flex;gap:4px}.tabs button{font-weight:600}
+.tb{width:100%;border-collapse:collapse;font-size:13px}.tb td,.tb th{border-bottom:1px solid var(--bd);padding:3px 6px;text-align:left}
+.sp{margin:2px}
+@media(max-width:900px){header{flex-wrap:wrap;gap:6px}}
+</style>
+</head>
+<body>
+<header><h1>Alchemist by BXA<span data-i="sub"></span></h1><div class="tabs"><button id="tm" class="on" data-i="tabM"></button><button id="tr" data-i="tabR"></button></div><div class="r"><button id="lang">বাংলা</button><button id="theme" data-i="theme"></button></div></header>
+<main>
+ <aside><div id="msd">
+  <input id="q" style="width:100%">
+  <div class="g"><small data-i="bondT"></small><br><span id="chB"></span></div>
+  <div class="g"><small data-i="prop"></small><br><span id="chP"></span></div>
+  <div class="g"><small data-i="atoms"></small><br><span id="chA"></span></div>
+  <p id="hint" class="mu"></p><button id="clr" data-i="clr"></button>
+  <div id="list"></div>
+  <details><summary data-i="add"></summary>
+   <p class="mu" data-i="tpl"></p>
+   <select id="tc"></select> <select id="tl"></select>
+   <select id="tg"><option value="tet" data-i="g_tet"></option><option value="pyr" data-i="g_pyr"></option><option value="bent" data-i="g_bent"></option><option value="lin" data-i="g_lin"></option><option value="pla" data-i="g_pla"></option></select>
+   <button id="addt" data-i="build"></button>
+   <p class="mu" data-i="coh"></p>
+   <textarea id="co">C 0 0 0
+H 0.63 0.63 0.63
+H -0.63 -0.63 0.63
+Cl -0.63 0.63 -0.63
+Cl 0.63 -0.63 -0.63</textarea>
+   <button id="addc" data-i="addc"></button>
+  </details>
+ </div>
+  <div id="rsd" hidden>
+   <input id="rq" style="width:100%"><div class="g"><span id="rch"></span></div><div id="rlist"></div>
+   <details open><summary data-i="cust"></summary>
+    <input id="ceq" style="width:100%" value="2 H2 + O2 -> 2 H2O">
+    <button id="cld" data-i="go"></button> <button id="cab" data-i="ab"></button>
+    <p id="cmsg" class="mu"></p><p class="mu" data-i="chelp"></p>
+   </details>
+  </div>
+ </aside>
+ <section id="view">
+  <div class="bar">
+   <button data-m="ball" class="on" data-i="ball"></button><button data-m="cpk" data-i="cpk"></button><button data-m="wire" data-i="wire"></button>
+   <label><input type="checkbox" id="lab" checked><span data-i="lab"></span></label>
+   <label><input type="checkbox" id="mir"><span data-i="mir"></span></label>
+   <label id="tgw" hidden><span data-i="drag"></span><select id="tgt"><option value="both" data-i="both"></option><option value="mirror" data-i="mirOnly"></option></select></label>
+  </div>
+  <div class="bar">
+   <label><span data-i="ex"></span><input type="range" id="exs" min=".6" max="2.6" step=".05" value="1"></label>
+   <button id="bx" data-i="ax"></button><button id="by" data-i="ay"></button>
+   <label><span data-i="spd"></span><input type="range" id="spd" min="1" max="10" value="4"></label>
+  </div>
+  <div class="bar" id="rxbar" hidden>
+   <button id="play" data-i="play"></button>
+   <label><span data-i="prg"></span><input type="range" id="prg" min="0" max="100" step=".5" value="0" style="width:200px;max-width:45vw"></label>
+  </div>
+  <div id="cw"><canvas id="cv"></canvas><div id="note"></div><div id="legend"></div></div>
+ </section>
+ <section id="info"></section>
+</main>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+/* ===== Element table: [covalent radius, van der Waals radius, colour] ===== */
+const E={H:[.31,1.1,'#ffffff'],C:[.76,1.7,'#7a8594'],N:[.71,1.55,'#3b6cf6'],O:[.66,1.52,'#ef4444'],F:[.57,1.47,'#86efac'],
+ Na:[1.66,2.27,'#a855f7'],Cl:[1.02,1.75,'#22c55e'],S:[1.05,1.8,'#facc15'],P:[1.07,1.8,'#fb923c']};
+/* Bond type styles: colour, label */
+const BT={s:['#b8c0cc','Single (covalent)'],d:['#f5a623','Double (covalent)'],t:['#ef476f','Triple (covalent)'],
+ ion:['#a855f7','Ionic'],hb:['#22d3ee','Hydrogen bond'],co:['#34d399','Coordinate']};
+
+/* ===== Molecule database ===== */
+const A=s=>s.split(/[;\n]/).map(t=>t.trim()).filter(Boolean).map(t=>{const a=t.split(/\s+/);return[a[0],+a[1],+a[2],+a[3]]});
+const V=(x,y,z)=>new THREE.Vector3(x,y,z), nrm=(v,l)=>v.normalize().multiplyScalar(l);
+
+function glucose(){ // schematic beta-D-glucopyranose chair-like ring
+ const at=[],add=(e,v)=>at.push([e,v.x,v.y,v.z]);
+ for(let k=0;k<6;k++){
+  const th=k*Math.PI/3,r=V(Math.cos(th),Math.sin(th),0),t=V(-Math.sin(th),Math.cos(th),0),zs=k%2?1:-1;
+  const cm=(a,b,z)=>V(a*r.x+b*t.x,a*r.y+b*t.y,z), P=cm(1.45,0,.25*zs);
+  add(k?'C':'O',P); if(!k)continue;
+  add('H',P.clone().add(nrm(cm(.2,0,zs),1.09)));              // axial H
+  const eq=P.clone().add(nrm(cm(.9,0,-.4*zs),k<5?1.43:1.52)); // equatorial substituent
+  if(k<5){add('O',eq);add('H',eq.clone().add(nrm(cm(.6,.5,.3),.96)));}
+  else{ // C6 = CH2OH
+   add('C',eq);add('H',eq.clone().add(nrm(cm(.2,.5,.6),1.09)));add('H',eq.clone().add(nrm(cm(.2,-.5,-.6),1.09)));
+   const o=eq.clone().add(nrm(cm(1,.3,.2),1.43));add('O',o);add('H',o.clone().add(nrm(cm(.5,.6,0),.96)));}
+ }
+ return at;
+}
+const L=A("C 0 0 0;H .63 -.63 -.63;O -.83 -.83 .83;H -1.48 -1.23 1.38;C .88 .88 .88;O 1.93 1.43 .58;O .48 1.38 2.03;H .15 1.98 2.7;C -.88 .88 -.88;H -1.51 1.51 -.25;H -.25 1.51 -1.51;H -1.51 .25 -1.51");
+const benz=[];for(let k=0;k<6;k++){const a=k*Math.PI/3;benz.push(['C',1.39*Math.cos(a),1.39*Math.sin(a),0])}
+for(let k=0;k<6;k++){const a=k*Math.PI/3;benz.push(['H',2.48*Math.cos(a),2.48*Math.sin(a),0])}
+const nacl=[];for(let i=0;i<2;i++)for(let j=0;j<2;j++)for(let k=0;k<2;k++)nacl.push([(i+j+k)%2?'Cl':'Na',i*2.82,j*2.82,k*2.82]);
+
+// n=name f=formula iu=IUPAC at=atoms o=bond-order overrides (1,2,3 or 'c'=coordinate) hb=detect H-bonds ch=chiral centres org=organic
+// i = [bonding, isomerism, uses, importance]
+const M=[
+{n:'Water',f:'H<sub>2</sub>O',iu:'oxidane',at:A("O 0 0 0;H .76 .59 0;H -.76 .59 0"),ch:0,org:0,
+ i:['Two polar O–H σ bonds; O is sp³ with two lone pairs. Bent, 104.5°. Strongly polar (μ ≈ 1.85 D).','Achiral; optically inactive.','Solvent, coolant, steam power, cleaning, irrigation.','Solvent of life; hydrogen bonding gives high boiling point and heat capacity; reactant in hydrolysis and photosynthesis.']},
+{n:'Methane',f:'CH<sub>4</sub>',iu:'methane',at:A("C 0 0 0;H .63 .63 .63;H -.63 -.63 .63;H -.63 .63 -.63;H .63 -.63 -.63"),ch:0,org:1,
+ i:['sp³ carbon, four C–H σ bonds, tetrahedral 109.5°. Non-polar.','Achiral; optically inactive.','Natural-gas fuel, hydrogen production, chemical feedstock.','Made by methanogenic microbes; a potent greenhouse gas.']},
+{n:'Ammonia',f:'NH<sub>3</sub>',iu:'azane',at:A("N 0 0 0;H .94 -.33 0;H -.47 -.33 .81;H -.47 -.33 -.81"),ch:0,org:0,
+ i:['sp³ N with one lone pair; trigonal pyramidal, ≈107°. Polar; forms hydrogen bonds.','Achiral (N inverts rapidly).','Fertilisers (Haber–Bosch), refrigerant, nitric acid.','Central to nitrogen metabolism and the urea cycle; a weak base.']},
+{n:'Carbon dioxide',f:'CO<sub>2</sub>',iu:'carbon dioxide',at:A("C 0 0 0;O 1.16 0 0;O -1.16 0 0"),o:{'0-1':2,'0-2':2},ch:0,org:0,
+ i:['sp carbon, two C=O bonds (σ + π), linear 180°. Bonds are polar but the molecule is non-polar.','Achiral; optically inactive.','Carbonated drinks, dry ice, fire extinguishers, supercritical solvent.','Photosynthesis substrate; greenhouse gas; part of the blood bicarbonate buffer.']},
+{n:'Ethyne',f:'C<sub>2</sub>H<sub>2</sub>',iu:'ethyne (acetylene)',at:A("C .6 0 0;C -.6 0 0;H 1.66 0 0;H -1.66 0 0"),o:{'0-1':3},ch:0,org:1,
+ i:['Both carbons sp: one σ + two π bonds in the C≡C triple bond; linear 180°; non-polar.','Achiral.','Oxy-acetylene welding, feedstock for vinyl plastics.','Shows how bond order shortens bonds (1.20 Å).']},
+{n:'Ethanol',f:'C<sub>2</sub>H<sub>5</sub>OH',iu:'ethanol',at:A("C 0 0 0;C 1.52 0 0;O 2 1.36 0;H -.37 1.02 0;H -.37 -.51 .89;H -.37 -.51 -.89;H 1.89 -.51 .89;H 1.89 -.51 -.89;H 2.97 1.3 0"),ch:0,org:1,
+ i:['sp³ carbons and oxygen; C–O–H ≈ 109°. The polar O–H forms hydrogen bonds.','Achiral (no carbon with four different groups).','Fuel additive, solvent, disinfectant, beverages.','Yeast fermentation product; metabolised by alcohol dehydrogenase.']},
+{n:'Benzene',f:'C<sub>6</sub>H<sub>6</sub>',iu:'benzene',at:benz,o:{'0-1':2,'2-3':2,'4-5':2},ch:0,org:1,
+ i:['Six sp² carbons, planar, 120°. Delocalised π cloud (aromatic); every C–C is really order 1.5 (Kekulé form shown). Non-polar.','Achiral; planar.','Precursor of styrene, phenol and nylon; industrial solvent (restricted).','Carcinogenic; its aromatic ring is the motif of amino acids and DNA bases.']},
+{n:'Glucose (β-D-pyranose)',f:'C<sub>6</sub>H<sub>12</sub>O<sub>6</sub>',iu:'(2R,3R,4S,5S,6R)-6-(hydroxymethyl)oxane-2,3,4,5-tetrol',at:glucose(),ch:5,org:1,
+ i:['All C and O are sp³; polar C–O and O–H bonds give extensive hydrogen bonding. Ring geometry is schematic.','5 stereocentres in the ring; D-series, dextrorotatory (+52.7° at equilibrium); α/β anomers interconvert (mutarotation).','Food, IV dextrose, fermentation feedstock, sorbitol.','Main cellular fuel (glycolysis → ATP); monomer of starch, glycogen and cellulose.']},
+{n:'Sodium chloride (2×2×2 lattice)',f:'NaCl',iu:'sodium chloride',at:nacl,ch:0,org:0,
+ i:['Ionic: Na⁺ and Cl⁻ held by electrostatic attraction in a cubic lattice (6:6 coordination). No hybridisation; m.p. 801 °C.','Achiral; no molecules, only a lattice.','Food preservation, de-icing, chlor-alkali industry.','Electrolyte balance, nerve signalling, osmosis.']},
+{n:'L-Lactic acid',f:'C<sub>3</sub>H<sub>6</sub>O<sub>3</sub>',iu:'(2S)-2-hydroxypropanoic acid',at:L,o:{'4-5':2},ch:1,org:1,
+ i:['C2 is sp³ (chiral); carboxyl carbon is sp², 120°, with C=O. Polar O–H groups hydrogen bond.','(S)-(+), dextrorotatory. Its mirror image is D-lactic acid; the two cannot be superimposed.','Food acidulant, polylactic acid (PLA) bioplastic, cosmetics.','Made by muscle in anaerobic glycolysis; the L-form is the mammalian isomer.']},
+{n:'D-Lactic acid',f:'C<sub>3</sub>H<sub>6</sub>O<sub>3</sub>',iu:'(2R)-2-hydroxypropanoic acid',at:L.map(a=>[a[0],-a[1],a[2],a[3]]),o:{'4-5':2},ch:1,org:1,
+ i:['Same bonding as the L-form (sp³ chiral C2, sp² carboxyl C).','(R)-(−), levorotatory enantiomer of L-lactic acid.','Specialty PLA blends, chiral building block.','Produced by some bacteria; slowly metabolised by humans.']},
+{n:'Water dimer',f:'(H<sub>2</sub>O)<sub>2</sub>',iu:'water dimer',at:A("O 0 0 0;H .96 0 0;H -.24 .93 0;O 2.9 0 0;H 3.4 .8 0;H 3.4 -.8 0"),hb:1,ch:0,org:0,
+ i:['Dashed cyan line = O–H···O hydrogen bond (~1.9 Å, ~21 kJ/mol): mostly electrostatic with some covalent character.','Achiral.','Explains ice, boiling point and surface tension of water.','Hydrogen bonds hold DNA base pairs together and shape protein folding.']},
+{n:'Ammonium ion',f:'NH<sub>4</sub><sup>+</sup>',iu:'azanium',at:A("N 0 0 0;H .59 .59 .59;H -.59 -.59 .59;H -.59 .59 -.59;H .59 -.59 -.59"),o:{'0-1':'c'},ch:0,org:0,
+ i:['sp³ N, tetrahedral 109.5°. One N–H is a coordinate (dative) bond: NH₃ donates its lone pair to H⁺ (green). All four bonds are identical in reality.','Achiral.','Fertiliser salts, buffers.','Form in which nitrogen is assimilated; part of the blood pH buffer system.']}
+];
+
+/* Extra data: detailed description + where found (EN), and a full Bengali set (name, info, description, location) */
+const X=[
+['Bent molecule in which oxygen pulls bonding electrons toward itself, so the molecule has a dipole. Each molecule can form up to four hydrogen bonds, which explains why ice floats, its high surface tension and its power to dissolve salts and sugars.','Oceans, rivers, rain, ice caps, water vapour in air, and about 60% of the human body.'],
+['The simplest alkane. It is perfectly symmetric so it has no dipole and dissolves poorly in water. It burns to CO2 and water, releasing about 890 kJ/mol.','Natural-gas fields, coal seams, wetlands, rice paddies, livestock digestion, landfills and biogas plants.'],
+['Colourless gas with a sharp smell, very soluble in water where it forms NH4+ and OH-. Industrially made from N2 and H2 at high pressure over an iron catalyst.','Fertiliser plants, household cleaners, decaying organic matter, urine and animal waste.'],
+['Linear and symmetric, so the two bond dipoles cancel. It dissolves in water to form weak carbonic acid; the solid (dry ice) sublimes at -78.5 C.','Air (about 0.04%), volcanic gas, exhaled breath, fermentation, combustion exhaust and fizzy drinks.'],
+['The triple bond makes it a high-energy gas that burns above 3000 C with oxygen. It is prepared from calcium carbide and water.','Welding workshops (gas cylinders), carbide lamps and petrochemical plants.'],
+['Colourless liquid that mixes with water: the OH group is polar while the ethyl group dissolves organic compounds. It boils at 78 C.','Alcoholic drinks, hand sanitisers, petrol blends (E10), perfumes, fermenting fruit and grain.'],
+['Flat ring with six equal C-C bonds (1.39 A) thanks to delocalised pi electrons, giving unusual stability. It prefers substitution over addition reactions.','Crude oil and petrol, cigarette smoke, vehicle exhaust and chemical plants.'],
+['A six-carbon sugar that exists mostly as a six-membered ring in water. All its OH groups are equatorial in the beta form, making it the most stable sugar. It is the main product of photosynthesis.','Ripe fruit, honey, blood (about 5 mM), plant sap, and the starch and cellulose in food and wood.'],
+['A crystal where every Na+ is surrounded by six Cl- and vice versa. It dissolves in water as free ions, so the solution conducts electricity.','Seawater (about 3.5%), rock-salt mines, salt pans, table salt and body fluids.'],
+['A chiral hydroxy acid; the OH on carbon 2 and the COOH make it stronger than acetic acid (pKa 3.86). The two enantiomers share all properties except the direction in which they rotate light.','Sour milk, yogurt, pickles, sourdough, tired muscles and fermented foods.'],
+['Mirror image of L-lactic acid with identical physical properties apart from the direction of optical rotation.','Some bacteria-fermented foods, gut flora, and research labs making PLA plastics.'],
+['Two water molecules joined by one O-H...O hydrogen bond. In liquid water each molecule forms about 3.4 such bonds, which break and re-form every picosecond.','All liquid water and ice, cloud droplets, and inside proteins and DNA.'],
+['Formed when NH3 accepts a proton; it is tetrahedral and positively charged. Salts such as NH4Cl dissolve easily and act as weak acids.','Fertilisers (ammonium nitrate, sulfate), soil, urine, household cleaners and blood plasma.']];
+const BN=[
+{n:'পানি',i:['দুটি পোলার O–H σ বন্ধন; O sp³, বাঁকা আকৃতি ১০৪.৫°; অত্যন্ত পোলার।','দ্রাবক, শীতলকারক, বাষ্পশক্তি, সেচ।','জীবনের দ্রাবক; হাইড্রোজেন বন্ধনের কারণে স্ফুটনাঙ্ক ও তাপধারণ ক্ষমতা বেশি।'],d:'অক্সিজেন ইলেকট্রন বেশি টানে তাই অণুটি পোলার। প্রতিটি অণু চারটি পর্যন্ত হাইড্রোজেন বন্ধন গড়তে পারে—এ কারণেই বরফ ভাসে এবং লবণ-চিনি দ্রবীভূত হয়।',w:'সাগর, নদী, বৃষ্টি, হিমবাহ, বায়ুর জলীয় বাষ্প এবং মানবদেহের প্রায় ৬০%।'},
+{n:'মিথেন',i:['sp³ কার্বন, চারটি C–H σ বন্ধন, চতুস্তলকীয় ১০৯.৫°; অপোলার।','প্রাকৃতিক গ্যাস জ্বালানি, হাইড্রোজেন উৎপাদন।','মিথানোজেন অণুজীব তৈরি করে; শক্তিশালী গ্রিনহাউস গ্যাস।'],d:'সরলতম অ্যালকেন; প্রতিসম হওয়ায় অপোলার ও পানিতে অল্প দ্রবণীয়। পুড়লে CO₂ ও পানি তৈরি হয়।',w:'প্রাকৃতিক গ্যাস খনি, কয়লা স্তর, জলাভূমি, ধানক্ষেত, গবাদিপশুর পরিপাক, বায়োগ্যাস প্ল্যান্ট।'},
+{n:'অ্যামোনিয়া',i:['sp³ N, একটি নিঃসঙ্গ ইলেকট্রন জোড়; পিরামিডাকার ≈১০৭°; পোলার।','সার (হাবার–বশ), হিমায়ক, নাইট্রিক অ্যাসিড।','নাইট্রোজেন বিপাক ও ইউরিয়া চক্রের গুরুত্বপূর্ণ অংশ।'],d:'ঝাঁঝালো বর্ণহীন গ্যাস, পানিতে খুব দ্রবণীয়। শিল্পে N₂ ও H₂ থেকে উচ্চ চাপে লোহার অনুঘটকে তৈরি হয়।',w:'সার কারখানা, ঘরের পরিষ্কারক, পচনশীল জৈব পদার্থ, মূত্র ও প্রাণীর বর্জ্য।'},
+{n:'কার্বন ডাই-অক্সাইড',i:['sp কার্বন, দুটি C=O (σ+π), সরলরৈখিক ১৮০°; বন্ধন পোলার কিন্তু অণু অপোলার।','কার্বনেটেড পানীয়, শুকনো বরফ, অগ্নিনির্বাপক।','সালোকসংশ্লেষণের কাঁচামাল; গ্রিনহাউস গ্যাস।'],d:'প্রতিসম হওয়ায় দুই বন্ধনের ডাইপোল কাটাকাটি হয়। পানিতে দুর্বল কার্বনিক অ্যাসিড গঠন করে; কঠিন রূপ −৭৮.৫°C-এ উবে যায়।',w:'বায়ু (≈০.০৪%), আগ্নেয়গিরির গ্যাস, নিঃশ্বাস, গাঁজন, ধোঁয়া, ঠান্ডা পানীয়।'},
+{n:'ইথাইন',i:['দুই কার্বন sp: একটি σ ও দুটি π বন্ধন; সরলরৈখিক ১৮০°।','অক্সি-অ্যাসিটিলিন ঝালাই, প্লাস্টিক কাঁচামাল।','বন্ধন ক্রম বাড়লে বন্ধন দৈর্ঘ্য কমে, তার উদাহরণ (১.২০ Å)।'],d:'ত্রিবন্ধন থাকায় অক্সিজেনে ৩০০০°C-এর বেশি তাপে জ্বলে। ক্যালসিয়াম কার্বাইড ও পানি থেকে তৈরি হয়।',w:'ঝালাইয়ের গ্যাস সিলিন্ডার, কার্বাইড বাতি, পেট্রোকেমিক্যাল কারখানা।'},
+{n:'ইথানল',i:['sp³ কার্বন ও অক্সিজেন; পোলার O–H হাইড্রোজেন বন্ধন গড়ে।','জ্বালানি সংযোজক, দ্রাবক, জীবাণুনাশক।','ইস্টের গাঁজনে তৈরি; লিভারে অ্যালকোহল ডিহাইড্রোজিনেজ ভাঙে।'],d:'পানির সাথে মিশ্রণীয়; OH অংশ পোলার, ইথাইল অংশ জৈব পদার্থ গলায়। স্ফুটনাঙ্ক ৭৮°C।',w:'স্যানিটাইজার, পারফিউম, পেট্রল মিশ্রণ (E10), গাঁজানো ফল ও শস্য।'},
+{n:'বেনজিন',i:['ছয়টি sp² কার্বন, সমতল, ১২০°; ডিলোকালাইজড π ইলেকট্রন (অ্যারোমেটিক)।','স্টাইরিন, ফেনল, নাইলনের কাঁচামাল।','ক্যানসারজনক; অ্যামিনো অ্যাসিড ও DNA ক্ষারকে বেনজিন বলয় থাকে।'],d:'ছয়টি C–C বন্ধনই সমান (১.৩৯ Å), তাই অত্যন্ত স্থিতিশীল; যোজন নয়, প্রতিস্থাপন বিক্রিয়া করে।',w:'অপরিশোধিত তেল, পেট্রল, সিগারেটের ধোঁয়া, যানবাহনের ধোঁয়া, রাসায়নিক কারখানা।'},
+{n:'গ্লুকোজ (β-D-পাইরানোজ)',i:['সব C ও O sp³; পোলার C–O ও O–H, প্রচুর হাইড্রোজেন বন্ধন।','খাদ্য, শিরায় স্যালাইন, গাঁজন, সরবিটল।','কোষের প্রধান জ্বালানি; স্টার্চ, গ্লাইকোজেন, সেলুলোজের একক।'],d:'ছয় কার্বনের চিনি; পানিতে মূলত ছয়-সদস্যের বলয় আকারে থাকে। β-D-গ্লুকোজ সবচেয়ে স্থিতিশীল।',w:'পাকা ফল, মধু, রক্ত (≈৫ mM), উদ্ভিদের রস, ভাত-রুটির স্টার্চ।'},
+{n:'সোডিয়াম ক্লোরাইড (২×২×২ জালি)',i:['আয়নিক: Na⁺ ও Cl⁻ স্থিরবৈদ্যুতিক আকর্ষণে ঘনক জালিতে (৬:৬)।','খাদ্য সংরক্ষণ, বরফ গলানো, ক্লোর-অ্যালকালি শিল্প।','ইলেকট্রোলাইট ভারসাম্য, স্নায়ু সংকেত, অভিস্রবণ।'],d:'প্রতিটি Na⁺-কে ছয়টি Cl⁻ ঘিরে থাকে। পানিতে আয়ন হয়ে মিশে, তাই দ্রবণ বিদ্যুৎ পরিবহন করে।',w:'সমুদ্রের পানি (≈৩.৫%), শিলা-লবণ খনি, লবণ চাষ, খাবার লবণ, দেহতরল।'},
+{n:'L-ল্যাকটিক অ্যাসিড',i:['C2 sp³ (কাইরাল); কার্বক্সিল কার্বন sp²; পোলার O–H।','খাদ্য অম্লকারক, PLA বায়োপ্লাস্টিক, প্রসাধনী।','পেশিতে অবায়বীয় শ্বসনে তৈরি; স্তন্যপায়ীর রূপ L।'],d:'কাইরাল হাইড্রক্সি অ্যাসিড, অ্যাসিটিক অ্যাসিডের চেয়ে শক্তিশালী (pKa ৩.৮৬)। দুই এনানশিওমারের ধর্ম একই, শুধু আলোর ঘূর্ণন বিপরীত।',w:'টক দই, দুধ, আচার, ক্লান্ত পেশি, গাঁজানো খাবার।'},
+{n:'D-ল্যাকটিক অ্যাসিড',i:['L-রূপের মতোই বন্ধন।','বিশেষ PLA মিশ্রণ, কাইরাল বিল্ডিং ব্লক।','কিছু ব্যাকটেরিয়া তৈরি করে; মানুষ ধীরে বিপাক করে।'],d:'L-ল্যাকটিক অ্যাসিডের দর্পণ প্রতিবিম্ব; আলোর ঘূর্ণনের দিক ছাড়া সব ভৌত ধর্ম একই।',w:'ব্যাকটেরিয়া-গাঁজানো কিছু খাবার, অন্ত্রের জীবাণু, গবেষণাগার।'},
+{n:'পানির ডাইমার',i:['বিন্দু রেখা = O–H···O হাইড্রোজেন বন্ধন (~১.৯ Å, ~২১ kJ/mol)।','বরফ ও পানির স্ফুটনাঙ্ক ব্যাখ্যা করে।','DNA ক্ষার জোড়া ও প্রোটিনের ভাঁজ ধরে রাখে।'],d:'দুটি পানির অণু একটি হাইড্রোজেন বন্ধনে যুক্ত। তরল পানিতে প্রতিটি অণু গড়ে ~৩.৪টি বন্ধন গড়ে, যা প্রতি পিকোসেকেন্ডে ভাঙে-গড়ে।',w:'সব তরল পানি ও বরফ, মেঘের ফোঁটা, প্রোটিন ও DNA-র ভেতরে।'},
+{n:'অ্যামোনিয়াম আয়ন',i:['sp³ N, ১০৯.৫°। একটি N–H সন্নিবেশ বন্ধন (সবুজ): NH₃-এর নিঃসঙ্গ জোড়া H⁺-কে দেয়।','সার লবণ, বাফার।','নাইট্রোজেন আত্তীকরণ; রক্তের pH বাফার।'],d:'NH₃ প্রোটন গ্রহণ করলে তৈরি, ধনাত্মক ও চতুস্তলকীয়। NH₄Cl-এর মতো লবণ পানিতে সহজে মেশে ও দুর্বল অ্যাসিডের মতো আচরণ করে।',w:'সার (অ্যামোনিয়াম নাইট্রেট/সালফেট), মাটি, মূত্র, ঘরের পরিষ্কারক, রক্তরস।'}];
+M.forEach((m,k)=>{if(!X[k])return;m.d=X[k][0];m.w=X[k][1];m.bn=BN[k];});
+M[8].k=4; // NaCl entry is a 4-formula-unit lattice fragment (used for molar mass / balancing)
+/* Extra species needed by the reaction module */
+M.push(
+{n:'Hydrogen gas',f:'H<sub>2</sub>',iu:'dihydrogen',at:A("H .37 0 0;H -.37 0 0"),ch:0,org:0,i:['One σ bond from overlap of two 1s orbitals (0.74 Å); non-polar.','Achiral.','Ammonia synthesis, fuel cells, rocket fuel.','Lightest and most abundant element in the universe.'],d:'Non-polar diatomic gas; burns in oxygen to give water, releasing about 286 kJ/mol.',w:'Traces in air, volcanic gas, stars; made industrially by steam reforming and electrolysis.'},
+{n:'Oxygen gas',f:'O<sub>2</sub>',iu:'dioxygen',at:A("O .6 0 0;O -.6 0 0"),o:{'0-1':2},ch:0,org:0,i:['O=O double bond (1.21 Å); paramagnetic (two unpaired π* electrons); non-polar.','Achiral.','Combustion, steelmaking, medical oxygen, welding.','Final electron acceptor in respiration; released by photosynthesis.'],d:'Strong oxidiser that supports combustion; liquid O2 is pale blue.',w:'About 21% of air, dissolved in water, produced by plants and algae.'},
+{n:'Nitrogen gas',f:'N<sub>2</sub>',iu:'dinitrogen',at:A("N .55 0 0;N -.55 0 0"),o:{'0-1':3},ch:0,org:0,i:['N≡N triple bond (1.10 Å, 945 kJ/mol): one σ + two π; non-polar.','Achiral.','Ammonia (Haber), inert atmospheres, liquid-nitrogen coolant.','Nitrogen fixation converts it to usable forms.'],d:'Very unreactive because the triple bond is hard to break.',w:'78% of air; liquid nitrogen in laboratories.'},
+{n:'Chlorine gas',f:'Cl<sub>2</sub>',iu:'dichlorine',at:A("Cl 1 0 0;Cl -1 0 0"),ch:0,org:0,i:['Single Cl–Cl σ bond (1.99 Å) from 3p overlap; weak (243 kJ/mol), non-polar.','Achiral.','Water disinfection, PVC, bleach.','Reactive oxidiser; toxic.'],d:'Yellow-green, dense, toxic gas; light splits the weak bond into radicals.',w:'Made by brine electrolysis; pool chemicals; chemical plants.'},
+{n:'Hydrogen chloride',f:'HCl',iu:'hydrogen chloride',at:A("H 0 0 0;Cl 1.27 0 0"),ch:0,org:0,i:['Polar covalent H–Cl σ bond (1.27 Å, dipole 1.1 D).','Achiral.','Steel pickling, pH control, PVC production.','Stomach acid (hydrochloric acid) aids digestion.'],d:'Colourless gas that dissolves in water to give strong hydrochloric acid.',w:'Gastric juice, industrial plants, volcanic gases.'},
+{n:'Carbon monoxide',f:'CO',iu:'carbon monoxide',at:A("C .56 0 0;O -.56 0 0"),o:{'0-1':3},ch:0,org:0,i:['C≡O triple bond (1.13 Å); carbon lone pair binds metals.','Achiral.','Fuel gas, metallurgy, Fischer–Tropsch feedstock.','Binds haemoglobin more strongly than O2, hence toxic.'],d:'Colourless, odourless, toxic gas from incomplete combustion.',w:'Vehicle exhaust, faulty heaters, wildfires, tobacco smoke.'},
+{n:'Chloride ion',f:'Cl<sup>−</sup>',iu:'chloride',at:A("Cl 0 0 0"),ch:0,org:0,i:['Single ion with a full 3p shell; spherical, no covalent bonds.','Achiral.','Salt, brine, PVC chemistry.','Main anion of body fluids; nerve and fluid balance.'],d:'Formed when chlorine gains an electron; hydrated by water in solution.',w:'Seawater, blood plasma, stomach acid, dissolved table salt.'}
+);
+
+/* Work out bonds from geometry (distance rule) and tag each molecule */
+function prep(m){
+ const a=m.at,B=[],o=m.o||{};
+ for(let i=0;i<a.length;i++)for(let j=i+1;j<a.length;j++){
+  const p=a[i],q=a[j],d=Math.hypot(p[1]-q[1],p[2]-q[2],p[3]-q[3]),na=(p[0]=='Na')+(q[0]=='Na');
+  if(na==2)continue;
+  if(d<1.2*(E[p[0]][0]+E[q[0]][0])){const k=i+'-'+j;B.push({i,j,t:na?'ion':o[k]=='c'?'co':'sdt'[(o[k]||1)-1]});}
+  else if(m.hb&&d>1.5&&d<2.4&&((p[0]=='H'&&'ON'.includes(q[0]))||(q[0]=='H'&&'ON'.includes(p[0]))))B.push({i,j,t:'hb'});
+ }
+ m.bonds=B;m.tags=new Set([m.ch?'Chiral':'Achiral',m.org?'Organic':'Inorganic']);
+ B.forEach(b=>m.tags.add({ion:'Ionic',hb:'Hydrogen',co:'Coordinate'}[b.t]||'Covalent'));
+ m.g=a.map((_,i)=>i); // group id per atom (radical = heavy atom + its hydrogens)
+ B.forEach(b=>{if(b.t=='hb'||b.t=='ion')return;const h=a[b.i][0]=='H',k=a[b.j][0]=='H';if(h&&!k)m.g[b.i]=b.j;else if(k&&!h)m.g[b.j]=b.i;});
+ const gc={};m.g.forEach((g,i)=>(gc[g]=gc[g]||[]).push(a[i][0]));
+ m.rad=Object.values(gc).map(l=>{const c={};l.forEach(e=>c[e]=(c[e]||0)+1);return Object.keys(c).sort((x,y)=>(x=='H')-(y=='H')).map(e=>e+(c[e]>1?c[e]:'')).join('');});
+}
+M.forEach(prep);
+
+/* ===== Three.js scene ===== */
+const $=s=>document.querySelector(s),cv=$('#cv');
+const ren=new THREE.WebGLRenderer({canvas:cv,antialias:true,alpha:true}),sc=new THREE.Scene(),cam=new THREE.PerspectiveCamera(45,1,.1,200);
+sc.add(new THREE.AmbientLight(0xffffff,.65));const dl=new THREE.DirectionalLight(0xffffff,.9);dl.position.set(4,6,8);sc.add(dl);
+const pA=new THREE.Group(),pB=new THREE.Group();sc.add(pA,pB);const rG=new THREE.Group();rG.visible=false;sc.add(rG);
+let cur=M[0],mode='ball',mirror=false;
+const YA=V(0,1,0);
+
+function cyl(g,a,b,r,col){ // cylinder between two points
+ const d=b.clone().sub(a),len=d.length(),m=new THREE.Mesh(new THREE.CylinderGeometry(r,r,len,8),new THREE.MeshPhongMaterial({color:col}));
+ m.position.copy(a).addScaledVector(d,.5);m.quaternion.setFromUnitVectors(YA,d.normalize());g.add(m);
+}
+function bond(g,a,b,t){ // draws single/double/triple as 1-3 cylinders, ionic/H/coordinate as dashes
+ const d=b.clone().sub(a),len=d.length(),u=d.clone().normalize(),col=BT[t][0],w=mode=='wire'?.5:1;
+ let p=u.clone().cross(Math.abs(u.y)<.9?YA:V(1,0,0)).normalize();
+ if('ion hb co'.includes(t)){const n=Math.max(2,Math.floor(len/.32));
+  for(let k=0;k<n;k++)cyl(g,a.clone().addScaledVector(u,len*(k+.15)/n),a.clone().addScaledVector(u,len*(k+.65)/n),(t=='ion'?.07:.05)*w,col);return;}
+ const n={s:1,d:2,t:3}[t],off=n==1?[0]:n==2?[-.1,.1]:[-.17,0,.17],r=[0,.07,.055,.045][n]*w;
+ off.forEach(o=>cyl(g,a.clone().addScaledVector(p,o),b.clone().addScaledVector(p,o),r,col));
+}
+const lt={};
+function label(el){
+ if(!lt[el]){const c=document.createElement('canvas');c.width=c.height=64;const x=c.getContext('2d');
+  x.font='bold 38px sans-serif';x.textAlign='center';x.textBaseline='middle';x.lineWidth=7;x.strokeStyle='#000';x.fillStyle='#fff';
+  x.strokeText(el,32,34);x.fillText(el,32,34);lt[el]=new THREE.CanvasTexture(c);}
+ const s=new THREE.Sprite(new THREE.SpriteMaterial({map:lt[el],depthTest:false,transparent:true}));s.renderOrder=9;s.scale.set(.7,.7,1);return s;
+}
+function build(m,mir){ // returns a centred group for molecule m (mirrored through x if mir)
+ const g=new THREE.Group(),P=m.at.map(a=>V(mir?-a[1]:a[1],a[2],a[3]));
+ const c=P.reduce((s,p)=>s.add(p),V(0,0,0)).multiplyScalar(1/P.length);P.forEach(p=>p.sub(c));
+ if(ex!=1){const gc={};m.g.forEach((g,i)=>{const o=gc[g]=gc[g]||{s:V(0,0,0),n:0};o.s.add(P[i]);o.n++;});
+  const sh=m.at.map((_,i)=>{const o=gc[m.g[i]];return o.s.clone().multiplyScalar((ex-1)/o.n);});P.forEach((p,i)=>p.add(sh[i]));} // move each radical away from / toward the centre
+ m.at.forEach((a,i)=>{const e=E[a[0]],r=mode=='cpk'?e[1]*.85:mode=='wire'?.08:e[1]*.25;
+  const s=new THREE.Mesh(new THREE.SphereGeometry(r,24,16),new THREE.MeshPhongMaterial({color:e[2],shininess:70}));
+  s.position.copy(P[i]);g.add(s);
+  if($('#lab').checked){const l=label(a[0]);l.position.copy(P[i]);g.add(l);}});
+ if(mode!='cpk')m.bonds.forEach(b=>bond(g,P[b.i],P[b.j],b.t));
+ g.userData.r=Math.max(...P.map(p=>p.length()))+1.5;return g;
+}
+function draw(k){if(view=='rx'){rxDraw(k);return;}
+ [pA,pB].forEach(p=>{while(p.children.length)p.remove(p.children[0]);});
+ const a=build(cur,false);pA.add(a);pB.visible=mirror;
+ let r=a.userData.r,off=0;
+ if(mirror){pB.add(build(cur,true));off=r+.8;}
+ pA.position.x=-off;pB.position.x=off;
+ const asp=cam.aspect;if(!k)cam.position.z=Math.max(7,((mirror?(off+r)*2.1:r*2.6)+3)*(asp<1?1.5:1));
+ $('#note').textContent=mirror?(cur.ch?t('noteC'):t('noteA')):'';
+ $('#tgw').hidden=!mirror;
+}
+
+/* ===== Interaction: drag = rotate, wheel / pinch = zoom (mouse + touch) ===== */
+const pts=new Map();let pd=0;
+const zoom=f=>{cam.position.z=Math.min(70,Math.max(3,cam.position.z*f));};
+function rot(dx,dy){const q=new THREE.Quaternion().setFromEuler(new THREE.Euler(dy*.01,dx*.01,0));
+ if(view=='rx'){rG.quaternion.premultiply(q);return;}
+ if(!(mirror&&$('#tgt').value=='mirror'))pA.quaternion.premultiply(q);
+ if(mirror)pB.quaternion.premultiply(q);}
+cv.addEventListener('pointerdown',e=>{cv.setPointerCapture(e.pointerId);pts.set(e.pointerId,e);});
+cv.addEventListener('pointermove',e=>{if(!pts.has(e.pointerId))return;const p=pts.get(e.pointerId);
+ if(pts.size==1)rot(e.clientX-p.clientX,e.clientY-p.clientY);
+ pts.set(e.pointerId,e);
+ if(pts.size==2){const [a,b]=[...pts.values()],d=Math.hypot(a.clientX-b.clientX,a.clientY-b.clientY);if(pd)zoom(pd/d);pd=d;}});
+['pointerup','pointercancel'].forEach(t=>cv.addEventListener(t,e=>{pts.delete(e.pointerId);pd=0;}));
+cv.addEventListener('wheel',e=>{e.preventDefault();zoom(e.deltaY>0?1.1:.9);},{passive:false});
+
+function size(){const w=$('#cw').clientWidth,h=$('#cw').clientHeight;ren.setPixelRatio(Math.min(devicePixelRatio||1,2));ren.setSize(w,h,false);cam.aspect=w/h;cam.updateProjectionMatrix();}
+addEventListener('resize',()=>{size();draw();});
+let ax=0,ay=0,ex=1,view='mol',playing=0; // auto-rotate flags + radical expansion factor
+(function loop(){requestAnimationFrame(loop);const v=+$('#spd').value*.3;if(playing)rxStep();if((ax||ay)&&!pts.size)rot(ay?v:0,ax?v:0);ren.render(sc,cam);})();
+
+/* ===== UI ===== */
+/* ===== Language (EN / বাংলা) ===== */
+let lang='en';
+const T={en:{sub:'Interactive molecule & bonding explorer',theme:'Light / dark',q:'Search name or formula',bondT:'Bond type',prop:'Property',
+ atoms:'Pick atoms (click again to add more of one atom, ⊖ to remove). Matching molecules are listed below.',c_Ionic:'Ionic',c_Covalent:'Covalent',c_Coordinate:'Coordinate',c_Hydrogen:'Hydrogen',
+ c_Chiral:'Chiral',c_Achiral:'Achiral',c_Organic:'Organic',c_Inorganic:'Inorganic',ball:'Ball & stick',cpk:'Space-filling',wire:'Wireframe',lab:'Labels',mir:'Mirror compare',
+ drag:'Drag moves',both:'both',mirOnly:'mirror only',ex:'Collapse ⇄ Expand radicals',ax:'Auto-rotate X',ay:'Auto-rotate Y',spd:'Speed',
+ add:'Add custom molecule',tpl:'Template: centre atom, ligand atom, geometry.',g_tet:'Tetrahedral',g_pyr:'Pyramidal',g_bent:'Bent',g_lin:'Linear',g_pla:'Trigonal planar',build:'Build',
+ coh:'Or paste coordinates in Å, one atom per line (El x y z):',addc:'Add molecule',
+ bt_s:'Single (covalent)',bt_d:'Double (covalent)',bt_t:'Triple (covalent)',bt_ion:'Ionic',bt_hb:'Hydrogen bond',bt_co:'Coordinate',
+ hintN:'{n} molecule(s) match',none:'No molecules match. Clear a filter or add your own.',
+ noteC:'Left: original · Right: mirror image. Rotate and try to superimpose; chiral molecules never fully match.',noteA:'Achiral: the mirror image is identical and superimposes.',
+ iu:'IUPAC:',hBond:'Bonding & hybridization',hChir:'Chirality & isomerism',hUse:'Real-world uses',hBio:'Biological & chemical importance',
+ hDesc:'Detailed description',clr:'Clear all filters',tabM:'Molecules',tabR:'Reactions',play:'Play',pause:'Pause',prg:'Progress',rq:'Search reactions',cust:'Custom equation',go:'Load',ab:'Auto-balance',chelp:'Type species by formula or name, e.g. CH4 + O2 -> CO2 + H2O, then Auto-balance to find the coefficients.',custom:'Custom reaction',unb:'Unbalanced',bal:'Atom balance',lhs:'Reactants',rhs:'Products',en:'Energy profile (schematic barrier)',exo:'Exothermic',endo:'Endothermic',exp:'experimental',est:'Bond-energy estimate',be:'Bond-energy analysis',brk:'Bonds broken',frm:'Bonds formed',na:'Not estimable (ionic, coordinate or unlisted bonds).',st:'Stoichiometry & limiting reagent',yld:'% yield',lim:'Limiting reagent',left:'Left over',prod:'Produced',heat:'Heat released',heatA:'Heat absorbed',cond:'Conditions & catalyst',mech:'Mechanism / notes',use:'Uses & occurrence',spc:'Species (open in 3D)',rep:'Download report',ph1:'Reactants approach',ph2:'Transition state (schematic)',ph3:'Products separate',nobal:'Could not balance (max 6 species, coefficients up to 12).',gap:'Estimate assumes gas phase; liquid water adds about 44 kJ per H₂O.','c_Synthesis':'Synthesis','c_Combustion':'Combustion','c_Decomposition':'Decomposition','c_Redox':'Redox','c_Acid–base':'Acid–base','c_Photochemical':'Photochemical','c_Exothermic':'Exothermic','c_Endothermic':'Endothermic',t1:'Made only of these elements',t2:'Also contains these atoms',hWhere:'Where it is found in reality',hRad:'Radicals / groups (separate when expanded)',hStr:'Structure',chN:'{n} chiral centre(s). ',chZ:'No chiral centre. ',str:'{a} atoms · {b} bonds'},
+ bn:{sub:'ইন্টারঅ্যাকটিভ অণু ও বন্ধন এক্সপ্লোরার',theme:'লাইট / ডার্ক',q:'নাম বা সূত্র খুঁজুন',bondT:'বন্ধনের ধরন',prop:'ধর্ম',
+ atoms:'পরমাণু বাছাই করুন (একই পরমাণু বেশি লাগলে আবার ক্লিক করুন, ⊖ দিয়ে কমান)। মিলে যাওয়া অণু নিচে দেখাবে।',c_Ionic:'আয়নিক',c_Covalent:'সমযোজী',c_Coordinate:'সন্নিবেশ',c_Hydrogen:'হাইড্রোজেন',
+ c_Chiral:'কাইরাল',c_Achiral:'অ্যাকাইরাল',c_Organic:'জৈব',c_Inorganic:'অজৈব',ball:'বল ও স্টিক',cpk:'স্পেস-ফিলিং',wire:'ওয়্যারফ্রেম',lab:'লেবেল',mir:'মিরর তুলনা',
+ drag:'ড্র্যাগে ঘোরে',both:'দুটোই',mirOnly:'শুধু মিরর',ex:'র‍্যাডিক্যাল সংকুচিত ⇄ প্রসারিত',ax:'অটো ঘূর্ণন X',ay:'অটো ঘূর্ণন Y',spd:'গতি',
+ add:'নিজের অণু যোগ করুন',tpl:'টেমপ্লেট: কেন্দ্রীয় পরমাণু, লিগ্যান্ড, আকৃতি।',g_tet:'চতুস্তলকীয়',g_pyr:'পিরামিডাকার',g_bent:'বাঁকা',g_lin:'রৈখিক',g_pla:'ত্রিকোণীয় সমতল',build:'তৈরি করুন',
+ coh:'অথবা Å-এ স্থানাঙ্ক দিন, প্রতি লাইনে এক পরমাণু (El x y z):',addc:'অণু যোগ করুন',
+ bt_s:'একক (সমযোজী)',bt_d:'দ্বিবন্ধন (সমযোজী)',bt_t:'ত্রিবন্ধন (সমযোজী)',bt_ion:'আয়নিক',bt_hb:'হাইড্রোজেন বন্ধন',bt_co:'সন্নিবেশ',
+ hintN:'{n}টি অণু মিলেছে',none:'কোনো অণু মেলেনি। ফিল্টার সরান বা নিজের অণু যোগ করুন।',
+ noteC:'বামে মূল, ডানে দর্পণ প্রতিবিম্ব। ঘুরিয়ে মেলানোর চেষ্টা করুন; কাইরাল অণু কখনো পুরোপুরি মেলে না।',noteA:'অ্যাকাইরাল: দর্পণ প্রতিবিম্ব হুবহু এক, মিলে যায়।',
+ iu:'IUPAC নাম:',hBond:'বন্ধন ও সংকরায়ণ',hChir:'কাইরালিটি ও সমাণুতা',hUse:'বাস্তব ব্যবহার',hBio:'জৈব ও রাসায়নিক গুরুত্ব',
+ hDesc:'বিস্তারিত বিবরণ',clr:'সব ফিল্টার মুছুন',tabM:'অণু',tabR:'বিক্রিয়া',play:'চালান',pause:'থামান',prg:'অগ্রগতি',rq:'বিক্রিয়া খুঁজুন',cust:'নিজের সমীকরণ',go:'লোড',ab:'অটো-ব্যালেন্স',chelp:'সূত্র বা নাম লিখুন, যেমন CH4 + O2 -> CO2 + H2O, তারপর অটো-ব্যালেন্স চাপুন।',custom:'নিজের বিক্রিয়া',unb:'অসমতুল',bal:'পরমাণু ভারসাম্য',lhs:'বিক্রিয়ক',rhs:'উৎপাদ',en:'শক্তি প্রোফাইল (পাহাড় আনুমানিক)',exo:'তাপমোচী',endo:'তাপহারী',exp:'পরীক্ষালব্ধ',est:'বন্ধন-শক্তি অনুমান',be:'বন্ধন-শক্তি বিশ্লেষণ',brk:'ভাঙা বন্ধন',frm:'গঠিত বন্ধন',na:'অনুমান সম্ভব নয় (আয়নিক, সন্নিবেশ বা তালিকাহীন বন্ধন)।',st:'স্টয়কিওমেট্রি ও সীমিতকারী বিকারক',yld:'ফলন %',lim:'সীমিতকারী বিকারক',left:'অবশিষ্ট',prod:'উৎপন্ন',heat:'তাপ নির্গত',heatA:'তাপ শোষিত',cond:'শর্ত ও অনুঘটক',mech:'বিক্রিয়াকৌশল / নোট',use:'ব্যবহার ও প্রাপ্তিস্থান',spc:'অংশগ্রহণকারী অণু (3D-তে দেখুন)',rep:'রিপোর্ট ডাউনলোড',ph1:'বিক্রিয়কগুলো কাছে আসছে',ph2:'অন্তর্বর্তী দশা (আনুমানিক)',ph3:'উৎপাদগুলো আলাদা হচ্ছে',nobal:'ব্যালেন্স করা গেল না (সর্বোচ্চ ৬টি অণু, সহগ ১২ পর্যন্ত)।',gap:'অনুমান গ্যাসীয় দশার; তরল পানি প্রতি H₂O-তে প্রায় ৪৪ kJ বেশি তাপ দেয়।','c_Synthesis':'সংশ্লেষ','c_Combustion':'দহন','c_Decomposition':'বিয়োজন','c_Redox':'রেডক্স','c_Acid–base':'অ্যাসিড–ক্ষার','c_Photochemical':'আলোক-রাসায়নিক','c_Exothermic':'তাপমোচী','c_Endothermic':'তাপহারী',t1:'শুধু এই মৌলগুলো দিয়ে গঠিত',t2:'এই পরমাণুগুলোসহ আরও',hWhere:'বাস্তবে কোথায় পাওয়া যায়',hRad:'র‍্যাডিক্যাল / গ্রুপ (প্রসারিত করলে আলাদা দেখায়)',hStr:'কাঠামো',chN:'{n}টি কাইরাল কেন্দ্র; আলোক সক্রিয়। ',chZ:'কাইরাল কেন্দ্র নেই; আলোক নিষ্ক্রিয়। ',str:'{a}টি পরমাণু · {b}টি বন্ধন'}};
+const t=(k,r)=>{let s=T[lang][k]??T.en[k];if(r)for(const x in r)s=s.replace('{'+x+'}',r[x]);return s;};
+const nm=m=>lang=='bn'&&m.bn?m.bn.n:m.n;
+
+/* ===== UI: filters, atom picker, list, info panel ===== */
+const bt=new Set(),pr=new Set(),as=new Map(); // atom picker: element -> minimum count
+
+function chips(id,names,set,tr,cb){const el=$(id);
+ el.innerHTML=names.map(n=>`<span class="chip${set.has(n)?' on':''}" data-n="${n}"${E[n]?` style="border-left:4px solid ${E[n][2]}"`:''}>${tr?t('c_'+n):n}</span>`).join('');
+ el.onclick=e=>{const n=e.target.dataset.n;if(!n)return;set.has(n)?set.delete(n):set.add(n);e.target.classList.toggle('on');(cb||list)();};}
+/* Full-text search index: names (EN+BN), formula, IUPAC, text, tags, radicals, element names */
+const ELN={H:'hydrogen হাইড্রোজেন',C:'carbon কার্বন',N:'nitrogen নাইট্রোজেন',O:'oxygen অক্সিজেন',F:'fluorine ফ্লোরিন',Na:'sodium সোডিয়াম',Cl:'chlorine ক্লোরিন',S:'sulfur সালফার',P:'phosphorus ফসফরাস'};
+const hay=m=>m.hay||(m.hay=[m.n,m.f.replace(/<[^>]+>/g,''),m.iu,m.d,m.w,...m.i,...(m.bn?[m.bn.n,m.bn.d,m.bn.w,...m.bn.i]:[]),...m.rad,
+ ...[...m.tags].map(x=>x+' '+T.bn['c_'+x]),...new Set(m.at.map(a=>a[0]+' '+(ELN[a[0]]||'')))].join(' ').toLowerCase());
+const key=m=>m.key||(m.key=[m.n,m.f.replace(/<[^>]+>/g,''),m.iu,m.bn&&m.bn.n].join(' ').toLowerCase()); // name/formula text: substring match, ranked first
+const ws=(h,w)=>new RegExp('(^|[^\\p{L}\\p{N}\\p{M}])'+w.replace(/[.*+?^${}()|[\]\\]/g,'\\$&'),'u').test(h); // other text: word-start match
+function atomChips(){ // click = add one more of that atom, ⊖ = remove one
+ const el=$('#chA');
+ el.innerHTML=Object.keys(E).map(n=>{const c=as.get(n)||0;return `<span class="chip${c?' on':''}" data-n="${n}" style="border-left:4px solid ${E[n][2]}">${n}${c>1?' ×'+c:''}${c?` <b data-d="${n}">⊖</b>`:''}</span>`;}).join('');
+ el.onclick=e=>{const d=e.target.dataset.d,n=d||e.target.dataset.n;if(!n)return;const v=(as.get(n)||0)+(d?-1:1);v>0?as.set(n,v):as.delete(n);
+  atomChips();const r=list();if(as.size&&r.g1.length&&!r.g1.includes(cur))sel(r.g1[0]);}; // jump to best exact match
+}
+function list(){ // search + filters + atom picker; returns the two suggestion groups
+ const qs=$('#q').value.toLowerCase().replace(/[₀-₉]/g,c=>c.charCodeAt(0)-8320).split(/\s+/).filter(Boolean);
+ const sc=m=>qs.every(w=>key(m).includes(w))?0:1;
+ const base=M.filter(m=>qs.every(w=>key(m).includes(w)||ws(hay(m),w))&&[bt,pr].every(x=>!x.size||[...x].some(y=>m.tags.has(y)))).sort((a,b)=>sc(a)-sc(b));
+ const want=[...as.keys()];let g1=[],g2=base;
+ if(want.length){g1=[];g2=[];base.forEach(m=>{const c={};m.at.forEach(a=>c[a[0]]=(c[a[0]]||0)+1);
+  if(want.every(e=>(c[e]||0)>=as.get(e)))(Object.keys(c).length==want.length?g1:g2).push(m);});}
+ const box=$('#list');box.innerHTML='';
+ const rows=(arr,h)=>{if(h&&arr.length)box.insertAdjacentHTML('beforeend',`<p class="mu"><b>${t(h)}</b></p>`);
+  arr.forEach(m=>{const b=document.createElement('button');b.className=m==cur?'on':'';b.innerHTML=`${nm(m)}<br><small>${m.f}</small>`;b.onclick=()=>sel(m);box.appendChild(b);});};
+ rows(g1,want.length&&'t1');rows(g2,want.length&&'t2');
+ const n=g1.length+g2.length;
+ $('#hint').textContent=(as.size||bt.size||pr.size||qs.length)?(n?t('hintN',{n}):t('none')):'';
+ return{g1,g2};
+}
+function info(m){if(view=='rx'){rxInfo();return;}
+ const b=lang=='bn'&&m.bn,chir=b?(m.ch?t('chN',{n:m.ch}):t('chZ')):(m.ch?t('chN',{n:m.ch}):t('chZ'))+m.i[1];
+ const S=[['hBond',b?m.bn.i[0]:m.i[0]],['hChir',chir],['hUse',b?m.bn.i[1]:m.i[2]],['hBio',b?m.bn.i[2]:m.i[3]],
+  ['hDesc',(b?m.bn.d:m.d)||'—'],['hWhere',(b?m.bn.w:m.w)||'—'],['hRad',m.rad.join(' · ')]];
+ $('#info').innerHTML=`<h2>${nm(m)}</h2><div class="f">${m.f}</div><p class="mu">${t('iu')} ${m.iu}</p>`+
+  S.map(([h,x])=>`<h3>${t(h)}</h3><p>${x}</p>`).join('')+
+  `<h3>${t('hStr')}</h3><p class="mu">${t('str',{a:m.at.length,b:m.bonds.length})} · ${[...m.tags].map(x=>t('c_'+x)).join(', ')}</p>`;
+}
+function sel(m){cur=m;pA.quaternion.identity();pB.quaternion.identity();info(m);draw();list();}
+function apply(){ // re-render every translatable piece
+ document.documentElement.lang=lang;
+ document.querySelectorAll('[data-i]').forEach(e=>e.textContent=t(e.dataset.i));
+ $('#q').placeholder=t('q');$('#rq').placeholder=t('rq');$('#play').textContent=t(playing?'pause':'play');
+ chips('#chB',['Ionic','Covalent','Coordinate','Hydrogen'],bt,1);chips('#chP',['Chiral','Achiral','Organic','Inorganic'],pr,1);atomChips();
+ chips('#rch',['Synthesis','Combustion','Decomposition','Redox','Acid–base','Photochemical','Exothermic','Endothermic'],rt,1,rxList);
+ $('#legend').innerHTML=Object.entries(BT).map(([k,v])=>`<span><i style="background:${v[0]}"></i>${t('bt_'+k)}</span>`).join('');
+ $('#lang').textContent=lang=='en'?'বাংলা':'English';info(cur);draw(1);list();rxList();
+}
+$('#q').oninput=list;$('#clr').onclick=()=>{bt.clear();pr.clear();as.clear();$('#q').value='';apply();};
+document.querySelectorAll('[data-m]').forEach(b=>b.onclick=()=>{mode=b.dataset.m;document.querySelectorAll('[data-m]').forEach(x=>x.classList.toggle('on',x==b));draw(1);});
+$('#lab').onchange=()=>draw(1);$('#mir').onchange=e=>{mirror=e.target.checked;draw();};
+$('#exs').oninput=e=>{ex=+e.target.value;draw(1);};           // collapse/expand slider
+$('#bx').onclick=e=>{ax=!ax;e.target.classList.toggle('on',ax);};  // auto-rotate about X
+$('#by').onclick=e=>{ay=!ay;e.target.classList.toggle('on',ay);};  // auto-rotate about Y
+$('#theme').onclick=()=>{const r=document.documentElement;r.dataset.t=r.dataset.t=='dark'?'light':'dark';};
+$('#lang').onclick=()=>{lang=lang=='en'?'bn':'en';apply();};
+
+/* ===== Custom molecule builder ===== */
+const els=Object.keys(E).map(e=>`<option>${e}</option>`).join('');$('#tc').innerHTML=els;$('#tl').innerHTML=els;$('#tc').value='O';$('#tl').value='H';
+const TG={tet:[[1,1,1],[-1,-1,1],[-1,1,-1],[1,-1,-1]],pyr:[[.94,-.33,0],[-.47,-.33,.81],[-.47,-.33,-.81]],bent:[[.79,.61,0],[-.79,.61,0]],lin:[[1,0,0],[-1,0,0]],pla:[[1,0,0],[-.5,.87,0],[-.5,-.87,0]]};
+function addM(at){
+ const bad=at.find(a=>!E[a[0]]||a.slice(1).some(isNaN));if(bad||at.length<2){alert('Use lines like "O 0 0 0" with elements: '+Object.keys(E).join(', ')+'.');return;}
+ const cnt={};at.forEach(a=>cnt[a[0]]=(cnt[a[0]]||0)+1);
+ const k=Object.keys(cnt).sort((a,b)=>(a=='C'?-2:a=='H'?-1:0)-(b=='C'?-2:b=='H'?-1:0)||a.localeCompare(b));
+ const f=k.map(e=>e+(cnt[e]>1?`<sub>${cnt[e]}</sub>`:'')).join('');
+ const m={n:'Custom: '+f.replace(/<[^>]+>/g,''),f,iu:'user-defined',at,ch:0,org:!!cnt.C,i:['Bonds are detected automatically from interatomic distances.','Not analysed for chirality.','—','—'],d:'',w:''};
+ prep(m);M.push(m);sel(m);
+}
+$('#addt').onclick=()=>{const c=$('#tc').value,l=$('#tl').value,d=E[c][0]+E[l][0];
+ addM([[c,0,0,0],...TG[$('#tg').value].map(v=>{const n=Math.hypot(...v);return[l,...v.map(x=>x*d/n)];})]);};
+$('#addc').onclick=()=>addM(A($('#co').value));
+
+/* ===== Reaction research module ===== */
+const AM={H:1.008,C:12.011,N:14.007,O:15.999,F:18.998,Na:22.990,Cl:35.45,S:32.06,P:30.974};
+const FS=m=>m.f.replace(/<[^>]+>/g,'').replace('−','-');            // plain formula text
+const comp=m=>{const c={};m.at.forEach(a=>c[a[0]]=(c[a[0]]||0)+1/(m.k||1));return c;};
+const mm=m=>m.at.reduce((s,a)=>s+AM[a[0]],0)/(m.k||1);               // molar mass g/mol
+/* average bond energies, kJ/mol (key = sorted elements + bond order) */
+const BE={'C-C1':347,'C-C2':614,'C-C3':839,'C-H1':413,'C-O1':358,'C-O2':799,'C-O3':1072,'Cl-Cl1':243,'Cl-H1':431,'H-H1':436,'H-N1':391,'H-O1':463,'N-N3':945,'O-O2':498};
+const sym=['–','=','≡'];
+function bondSum(side){let tot=0,na=0;const cnt={};
+ side.forEach(s=>{if(s.m.k)na=1;s.m.bonds.forEach(b=>{const o={s:1,d:2,t:3}[b.t];if(!o){na=1;return;}
+  const k=[s.m.at[b.i][0],s.m.at[b.j][0]].sort().join('-')+o;if(!BE[k]){na=1;return;}cnt[k]=(cnt[k]||0)+s.c;tot+=BE[k]*s.c;});});
+ return{tot,na,txt:Object.entries(cnt).map(([k,n])=>{const o=+k.slice(-1),[a,b]=k.slice(0,-1).split('-');return n+'×'+a+sym[o-1]+b+' ('+BE[k]+')';}).join(', ')};}
+const est=x=>{const a=bondSum(x.r),b=bondSum(x.p);return a.na||b.na?null:{a,b,dh:a.tot-b.tot};};
+function parseEq(s){ // "2 H2 + O2 -> 2 H2O" -> {r:[{c,m}],p:[...]}
+ s=s.replace(/-->|→|⟶|=>|->|=/g,'->');const [L,Q]=s.split('->');if(!Q)return{err:'Use "->" between reactants and products.'};
+ const side=z=>z.trim().split(/\s*\+(?=\s*(?:\d+\s*)?[A-Za-z])/).map(tm=>{const q=tm.trim().match(/^(\d+)?\s*(.+)$/),f=q[2].replace('−','-').trim();
+  return{c:+(q[1]||1),f,m:M.find(m=>FS(m)==f||m.n.toLowerCase()==f.toLowerCase())};});
+ const a=side(L),b=side(Q),bad=[...a,...b].find(x=>!x.m);return bad?{err:'Unknown species: '+bad.f}:{r:a,p:b};}
+function balance(x){const L={},R={};let ml=0,mr=0;
+ x.r.forEach(s=>{const c=comp(s.m);for(const e in c)L[e]=(L[e]||0)+c[e]*s.c;ml+=mm(s.m)*s.c;});
+ x.p.forEach(s=>{const c=comp(s.m);for(const e in c)R[e]=(R[e]||0)+c[e]*s.c;mr+=mm(s.m)*s.c;});
+ const els=[...new Set([...Object.keys(L),...Object.keys(R)])];
+ return{L,R,els,ml,mr,ok:els.every(e=>Math.abs((L[e]||0)-(R[e]||0))<1e-6)};}
+function autoBal(sp){if(sp.length>6)return null;const els=[...new Set(sp.flatMap(x=>Object.keys(comp(x.m))))];
+ const V=sp.map(x=>els.map(e=>(comp(x.m)[e]||0)*(x.side=='r'?1:-1)));let best=null;const c=[];
+ (function go(i,sum){if(best&&sum>=best.s)return;if(i==V.length){if(els.every((_,k)=>Math.abs(c.reduce((t,ci,j)=>t+ci*V[j][k],0))<1e-6))best={s:sum,c:[...c]};return;}
+  for(let n=1;n<=12;n++){c[i]=n;go(i+1,sum+n);}})(0,0);return best&&best.c;}
+const eqHTML=x=>x.r.map(s=>(s.c>1?s.c+' ':'')+s.m.f).join(' + ')+' → '+x.p.map(s=>(s.c>1?s.c+' ':'')+s.m.f).join(' + ');
+
+/* Curated reactions (all species exist in the molecule database) */
+const R=[
+{n:'Water formation',bn:'পানি গঠন',eq:'2 H2 + O2 -> 2 H2O',t:'Synthesis',dH:-571.6,c:'Spark, flame or Pt catalyst; H₂/air mixtures are explosive between about 4% and 75% H₂.',m:'Radical chain: H· + O₂ → ·OH + ·O·, then ·OH + H₂ → H₂O + H·. Each cycle creates extra radicals (branching), hence the explosion. ΔH is for liquid water.',u:'Rocket engines, hydrogen fuel cells.'},
+{n:'Methane combustion',bn:'মিথেনের দহন',eq:'CH4 + 2 O2 -> CO2 + 2 H2O',t:'Combustion',dH:-890,c:'Ignition (≈540 °C autoignition); excess oxygen gives complete combustion.',m:'Free-radical chain through CH₃·, CH₂O and CO. With too little O₂ you get CO and soot instead.',u:'Gas stoves, heating, power stations.'},
+{n:'Haber process',bn:'হাবার প্রক্রিয়া',eq:'N2 + 3 H2 -> 2 NH3',t:'Synthesis',dH:-92,c:'Iron catalyst, 400–500 °C, 150–300 atm. Reversible: only ~15% converts per pass, so gas is recycled.',m:'N₂ adsorbs and dissociates on the Fe surface (rate-limiting), then is hydrogenated step by step to NH, NH₂, NH₃, which desorbs. Le Chatelier: high pressure favours NH₃, but high temperature is needed for rate.',u:'Nitrogen fertiliser, which feeds roughly half the world population.'},
+{n:'Hydrogen chloride formation',bn:'হাইড্রোজেন ক্লোরাইড গঠন',eq:'H2 + Cl2 -> 2 HCl',t:'Synthesis',dH:-184.6,c:'UV light or heat starts it; explosive in sunlight.',m:'Cl₂ + hν → 2 Cl·; Cl· + H₂ → HCl + H·; H· + Cl₂ → HCl + Cl· (chain propagation).',u:'Industrial hydrochloric acid.'},
+{n:'Photosynthesis',bn:'সালোকসংশ্লেষণ',eq:'6 CO2 + 6 H2O -> C6H12O6 + 6 O2',t:'Photochemical',dH:2803,c:'Light absorbed by chlorophyll; enzymes at about 25 °C.',m:'Light reactions split water and make ATP/NADPH; the Calvin cycle (RuBisCO) fixes CO₂ into sugar.',u:'Source of food energy and atmospheric oxygen.'},
+{n:'Aerobic respiration',bn:'শ্বসন (গ্লুকোজ জারণ)',eq:'C6H12O6 + 6 O2 -> 6 CO2 + 6 H2O',t:'Combustion',dH:-2803,c:'Cellular enzymes at 37 °C; energy is captured stepwise as ATP (about 30–32 per glucose).',m:'Glycolysis → Krebs cycle → oxidative phosphorylation. Same net equation as burning glucose.',u:'Powers nearly all animals, plants and fungi.'},
+{n:'Ethanol combustion',bn:'ইথানলের দহন',eq:'C2H5OH + 3 O2 -> 2 CO2 + 3 H2O',t:'Combustion',dH:-1367,c:'Ignition; pale blue flame.',m:'Radical chain through acetaldehyde and CO.',u:'Biofuel, spirit burners.'},
+{n:'Ethyne combustion',bn:'ইথাইনের দহন',eq:'2 C2H2 + 5 O2 -> 4 CO2 + 2 H2O',t:'Combustion',dH:-2599,c:'Oxy-acetylene flame reaches about 3500 °C.',m:'The C≡C bond cleaves; high C:H ratio makes a hot, sooty flame in plain air.',u:'Welding and metal cutting.'},
+{n:'Carbon monoxide oxidation',bn:'কার্বন মনোক্সাইডের জারণ',eq:'2 CO + O2 -> 2 CO2',t:'Redox',dH:-566,c:'Pt/Pd/Rh catalytic converter, 250–600 °C.',m:'CO and O₂ adsorb on the metal; O₂ dissociates and CO reacts with surface O atoms (Langmuir–Hinshelwood).',u:'Cleaning car exhaust.'},
+{n:'Ammonia + hydrogen chloride',bn:'অ্যামোনিয়া + HCl',eq:'NH3 + HCl -> NH4+ + Cl-',t:'Acid–base',dH:-176,c:'Instant at room temperature; white NH₄Cl smoke forms in air (ΔH is for solid NH₄Cl).',m:'NH₃ donates its lone pair to H⁺ of HCl, forming a coordinate (dative) N–H bond: watch the green dashed bond in the 3D view.',u:'Classic acid–base demonstration; ammonium salts.'},
+{n:'Water electrolysis',bn:'পানির তড়িৎ বিশ্লেষণ',eq:'2 H2O -> 2 H2 + O2',t:'Decomposition',dH:571.6,c:'Electric current (≥1.23 V) through an electrolyte; Pt/Ir catalysts.',m:'Cathode: 2H₂O + 2e⁻ → H₂ + 2OH⁻. Anode: 2H₂O → O₂ + 4H⁺ + 4e⁻.',u:'Green hydrogen production.'}];
+const RX=R.map(o=>({...o,...parseEq(o.eq)}));
+let rx=RX[0];const rt=new Set();
+
+/* ===== Reaction view: 3D collision animation, lists, research panel ===== */
+function setView(v){view=v;const r=v=='rx';
+ $('#msd').hidden=r;$('#rsd').hidden=!r;$('#rxbar').hidden=!r;$('#tm').classList.toggle('on',!r);$('#tr').classList.toggle('on',r);
+ pA.visible=!r;pB.visible=!r&&mirror;rG.visible=r;$('#mir').parentNode.hidden=r;$('#tgw').hidden=r||!mirror;
+ playing=0;$('#play').textContent=t('play');if(r)rxSel(rx);else{info(cur);sel(cur);}}
+function rxSel(x){rx=x;$('#prg').value=0;playing=0;$('#play').textContent=t('play');rG.quaternion.identity();rxDraw();rxInfo();rxList();}
+function rxList(){const q=$('#rq').value.toLowerCase(),box=$('#rlist');box.innerHTML='';
+ RX.filter(x=>(x.n+x.bn+x.eq+x.t+x.m+x.u+x.c).toLowerCase().includes(q)&&(!rt.size||[...rt].some(y=>y==x.t||y==(x.dH<0?'Exothermic':'Endothermic'))))
+  .forEach(x=>{const b=document.createElement('button');b.className=x==rx?'on':'';b.innerHTML=`${lang=='bn'?x.bn:x.n}<br><small>${eqHTML(x)}</small>`;b.onclick=()=>rxSel(x);box.appendChild(b);});}
+let rc=[];
+function rxDraw(k){while(rG.children.length)rG.remove(rG.children[0]);rc=[];let Rm=1;
+ [['r',rx.r],['p',rx.p]].forEach(([side,l])=>l.forEach(s=>{for(let i=0;i<s.c;i++){const g=build(s.m,false);Rm=Math.max(Rm,g.userData.r);rG.add(g);rc.push({g,s:side});}}));
+ Rm-=.7;const S=Math.max(2.2,Rm*1.6);let cM=1,rM=1;
+ ['r','p'].forEach(side=>{const L=rc.filter(o=>o.s==side),cols=L.length>4?2:1,rows=Math.ceil(L.length/cols);cM=Math.max(cM,cols);rM=Math.max(rM,rows);
+  L.forEach((o,i)=>o.a=V((side=='r'?-1:1)*(S*1.2+(i%cols)*S),(Math.floor(i/cols)-(rows-1)/2)*S,0));});
+ if(!k)cam.position.z=Math.max(7,(S*1.2+(cM-1)*S+Rm)/(.414*cam.aspect)*1.05,((rM-1)/2*S+Rm)/.414*1.05);
+ rxPose();}
+function rxPose(){const p=+$('#prg').value/100,e=x=>x*x*(3-2*x);
+ rc.forEach(o=>{let q,op;
+  if(o.s=='r'){q=p<.45?e(p/.45):1;op=p<.45?1:Math.max(0,1-(p-.45)/.1);o.g.position.copy(o.a).multiplyScalar(1-.8*q);}
+  else{q=p>.55?1-e((p-.55)/.45):1;op=p<.45?0:Math.min(1,(p-.45)/.1);o.g.position.copy(o.a).multiplyScalar(.2+.8*(1-q));}
+  o.g.visible=op>.02;o.g.traverse(n=>{if(n.material){n.material.transparent=true;n.material.opacity=op;}});});
+ $('#note').textContent=t(p<.45?'ph1':p<.55?'ph2':'ph3');enDraw();}
+function rxStep(){const v=$('#prg');let n=+v.value+.35;if(n>100)n=0;v.value=n;rc.forEach(o=>o.g.rotation.y+=.01);rxPose();}
+function enDraw(){const c=$('#enc');if(!c)return;const x=c.getContext('2d'),W=c.width,H=c.height,cs=getComputedStyle(document.documentElement);
+ const e=est(rx),dh=rx.dH??(e&&e.dh)??0,p=+$('#prg').value/100,u=Math.sign(dh)*(.1+.26*Math.min(1,Math.abs(dh)/2800));
+ const S=s=>s*s*(3-2*s),Y=s=>H*(.52-u*S(s)-.14*Math.sin(Math.PI*s)**2),X=s=>30+s*(W-60);
+ x.clearRect(0,0,W,H);x.lineWidth=2;x.font='22px sans-serif';x.fillStyle=cs.getPropertyValue('--mu');x.strokeStyle=cs.getPropertyValue('--bd');
+ [0,1].forEach(s=>{x.setLineDash([4,4]);x.beginPath();x.moveTo(X(0),Y(s));x.lineTo(X(1),Y(s));x.stroke();});x.setLineDash([]);
+ x.fillText(t('lhs'),30,Y(0)-10);x.fillText(t('rhs'),W-150,Y(1)-10);x.fillText('ΔH = '+(dh>0?'+':'')+Math.round(dh*10)/10+' kJ',W/2-80,H-8);
+ x.strokeStyle=cs.getPropertyValue('--ac');x.lineWidth=5;x.beginPath();for(let i=0;i<=60;i++)x[i?'lineTo':'moveTo'](X(i/60),Y(i/60));x.stroke();
+ x.fillStyle=cs.getPropertyValue('--tx');x.beginPath();x.arc(X(p),Y(p),10,0,7);x.fill();}
+function stoich(){const g=[...document.querySelectorAll('.gm')].map(e=>Math.max(0,+e.value||0)),y=(+$('#yld').value||100)/100;
+ const n=rx.r.map((s,i)=>g[i]/mm(s.m)),r=n.map((v,i)=>v/rx.r[i].c),xi=Math.min(...r),li=r.indexOf(xi),xa=xi*y,e=est(rx),dh=rx.dH??(e&&e.dh);
+ $('#sto').innerHTML=`<p><b>${t('lim')}:</b> ${rx.r[li].m.f}</p>`+
+  rx.r.map((s,i)=>`<p class="mu">${t('left')} ${s.m.f}: ${Math.max(0,g[i]-s.c*xa*mm(s.m)).toFixed(3)} g</p>`).join('')+
+  rx.p.map(s=>`<p>${t('prod')} ${s.m.f}: ${(s.c*xa).toFixed(4)} mol = <b>${(s.c*xa*mm(s.m)).toFixed(3)} g</b></p>`).join('')+
+  (dh!=null?`<p>${dh<0?t('heat'):t('heatA')}: <b>${Math.abs(dh*xa).toFixed(2)} kJ</b></p>`:'');}
+function rxInfo(){const x=rx,B=balance(x),e=est(x),dh=x.dH??(e&&e.dh),bn=lang=='bn'&&x.bn,H=[];
+ H.push(`<h2>${bn?x.bn:x.n}</h2><div class="f">${eqHTML(x)}</div><p>${x.t?`<span class="chip on">${t('c_'+x.t)}</span>`:''}${dh!=null?`<span class="chip on">${dh<0?t('exo'):t('endo')} · ΔH ${dh>0?'+':''}${Math.round(dh*10)/10} kJ</span>`:''}${B.ok?'':`<span class="chip" style="color:#ef4444;border-color:#ef4444">${t('unb')}</span>`}</p>`);
+ H.push(`<h3>${t('bal')}</h3><table class="tb"><tr><th></th><th>${t('lhs')}</th><th>${t('rhs')}</th><th></th></tr>`+
+  B.els.map(el=>{const a=B.L[el]||0,b=B.R[el]||0;return`<tr><td>${el}</td><td>${a}</td><td>${b}</td><td>${a==b?'✓':'✗'}</td></tr>`;}).join('')+
+  `<tr><td>g/mol</td><td>${B.ml.toFixed(2)}</td><td>${B.mr.toFixed(2)}</td><td>${Math.abs(B.ml-B.mr)<.01?'✓':'✗'}</td></tr></table>`);
+ H.push(`<h3>${t('en')}</h3><canvas id="enc" width="640" height="300" style="width:100%"></canvas>`);
+ H.push(`<h3>${t('be')}</h3>`+(e?`<p>${t('brk')}: ${e.a.txt} = <b>${e.a.tot} kJ</b></p><p>${t('frm')}: ${e.b.txt} = <b>${e.b.tot} kJ</b></p><p>${t('est')}: <b>ΔH ≈ ${e.dh>0?'+':''}${e.dh} kJ</b>${x.dH!=null?` · ${t('exp')}: ${x.dH} kJ (Δ ${Math.round(e.dh-x.dH)} kJ)`:''}</p><p class="mu">${t('gap')}</p>`:`<p class="mu">${t('na')}</p>`));
+ H.push(`<h3>${t('st')}</h3><table class="tb">`+x.r.map((s,i)=>`<tr><td>${s.m.f}</td><td>${mm(s.m).toFixed(2)} g/mol</td><td><input class="gm" type="number" min="0" step="any" value="10" style="width:80px"> g</td></tr>`).join('')+
+  `<tr><td colspan="2">${t('yld')}</td><td><input id="yld" type="number" min="0" max="100" value="100" style="width:80px"></td></tr></table><div id="sto"></div>`);
+ [['cond',x.c],['mech',x.m],['use',x.u]].forEach(([h,v])=>v&&H.push(`<h3>${t(h)}</h3><p>${v}</p>`));
+ H.push(`<h3>${t('spc')}</h3>`+[...x.r,...x.p].map(s=>`<button class="sp" data-i2="${M.indexOf(s.m)}">${s.m.f}</button>`).join(' ')+`<p><button id="dl">${t('rep')}</button></p>`);
+ $('#info').innerHTML=H.join('');
+ document.querySelectorAll('.gm,#yld').forEach(i=>i.oninput=stoich);stoich();enDraw();
+ document.querySelectorAll('.sp').forEach(b=>b.onclick=()=>{setView('mol');sel(M[+b.dataset.i2]);});
+ $('#dl').onclick=()=>{const T_=`ALCHEMIST BY BXA - reaction report\n${x.n}\n${x.r.map(s=>s.c+' '+FS(s.m)).join(' + ')} -> ${x.p.map(s=>s.c+' '+FS(s.m)).join(' + ')}\nBalanced: ${B.ok}\nDeltaH (experimental): ${x.dH??'n/a'} kJ\nDeltaH (bond-energy estimate): ${e?e.dh+' kJ':'n/a'}\n\nStoichiometry:\n${$('#sto').innerText}\n`;
+  const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([T_],{type:'text/plain'}));a.download='reaction-report.txt';a.click();};}
+function loadEq(auto){const q=parseEq($('#ceq').value);if(q.err){$('#cmsg').textContent=q.err;return;}
+ if(auto){const c=autoBal([...q.r.map(s=>({m:s.m,side:'r'})),...q.p.map(s=>({m:s.m,side:'p'}))]);if(!c){$('#cmsg').textContent=t('nobal');return;}
+  q.r.forEach((s,i)=>s.c=c[i]);q.p.forEach((s,i)=>s.c=c[q.r.length+i]);
+  $('#ceq').value=q.r.map(s=>(s.c>1?s.c+' ':'')+FS(s.m)).join(' + ')+' -> '+q.p.map(s=>(s.c>1?s.c+' ':'')+FS(s.m)).join(' + ');}
+ $('#cmsg').textContent='';rxSel({n:t('custom'),eq:$('#ceq').value,r:q.r,p:q.p,t:'',u:'',m:'',c:''});}
+$('#tm').onclick=()=>setView('mol');$('#tr').onclick=()=>setView('rx');
+$('#cld').onclick=()=>loadEq(0);$('#cab').onclick=()=>loadEq(1);$('#rq').oninput=rxList;
+$('#play').onclick=()=>{playing=!playing;$('#play').textContent=t(playing?'pause':'play');};
+$('#prg').oninput=rxPose;
+
+size();apply();sel(M[0]);
+</script>
+</body>
+</html>
